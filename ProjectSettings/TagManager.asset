@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 2
   tags:
   - Wall
+  - Snake
+  - Apple
+  - Background
+  - Audio
   layers:
   - Default
   - TransparentFX

@@ -1,33 +1,57 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using System.Collections;
+using UnityEngine.UIElements;
 
 public class Snake : MonoBehaviour
 {
 	private Rigidbody2D playerRb;
 	private Vector2 moveInput;
 	private bool isDead = false;
+	private bool gameStarted = false;
 	private int score = 0;
 
+	// Objetos
+	[SerializeField] private GameObject apple;
+
+	// Audio
+	
+
+	// Texto
 	[SerializeField] private float moveSpeed = 5f; // Velocidad de movimiento ajustable
 	[SerializeField] private TMP_Text scoreText;
-	[SerializeField] private GameObject apple;
+	[SerializeField] private TMP_Text startGameText;
+	[SerializeField] private TMP_Text keyStartText;
+	[SerializeField] private TMP_Text gameOverText;
+	[SerializeField] private TMP_Text restartText;
 
 	void Start()
 	{
+		// Inicializar Rigidbody2D
 		playerRb = GetComponent<Rigidbody2D>();
-
 		if (playerRb == null)
 		{
 			Debug.LogError("No se encuentra el componente Rigidbody en el GameObject Snake");
 		}
+
 		UpdateScoreText();
 		RelocateAppleAndActivate();
+		apple.SetActive(false);
+		gameOverText.gameObject.SetActive(false);
+		StartCoroutine(BlinkText());
 	}
 
 	void Update()
 	{
+		// Iniciar juego
+		if (!gameStarted)
+		{
+			if (Input.anyKeyDown)
+			{
+				StartGame();
+			}
+		}
+
 		// Detectar entrada de movimiento solo si el jugador está vivo
 		if (!isDead)
 		{
@@ -36,7 +60,7 @@ public class Snake : MonoBehaviour
 
 			moveInput = new Vector2(moveX, moveY).normalized;
 		}
-		else if (Input.GetKeyDown(KeyCode.Space))
+		else if (Input.anyKeyDown)
 		{
 			// Reiniciar el juego cuando el jugador está muerto y se presiona Espacio
 			RestartGame();
@@ -58,7 +82,19 @@ public class Snake : MonoBehaviour
 		{
 			moveSpeed = 0f;
 			isDead = true;
+			apple.SetActive(false);
+			gameOverText.gameObject.SetActive(isDead);
 		}
+	}
+
+	// Metodo para iniciar Juego
+	private void StartGame()
+	{
+		gameStarted = true;
+		apple.SetActive(true);
+		startGameText.gameObject.SetActive(false);
+		keyStartText.gameObject.SetActive(false);
+		RelocateApple(apple);
 	}
 
 	// Método para reiniciar el juego
@@ -69,15 +105,18 @@ public class Snake : MonoBehaviour
 		transform.position = Vector3.zero;
 		score = 0;
 		UpdateScoreText();
+		gameOverText.gameObject.SetActive(isDead);
+		keyStartText.gameObject.SetActive(isDead);
 	}
 
 	private void OnTriggerEnter2D(Collider2D collision)
 	{
 		if (collision.gameObject.tag == "Apple")
 		{
+			// sumar puntos
 			score++;
 			UpdateScoreText();
-			// destruir la manzana 
+			// recolocar la manzana 
 			RelocateApple(collision.gameObject);
 		}
 	}
@@ -93,10 +132,11 @@ public class Snake : MonoBehaviour
 			Debug.LogError("scoreText no está asignado en el Inspector");
 		}
 	}
+
 	private void RelocateAppleAndActivate()
 	{
-		RelocateApple(apple); 
-		apple.SetActive(true); 
+		RelocateApple(apple);
+		apple.SetActive(true);
 	}
 
 	// Relocalizar la manzana en un lugar aleatorio
@@ -113,5 +153,15 @@ public class Snake : MonoBehaviour
 		// Asigna la nueva posición a la manzana
 		apple.transform.position = new Vector2(randomX, randomY);
 	}
-	
+
+	// Corrutina para hacer parpadear el texto
+	private IEnumerator BlinkText()
+	{
+		while (true)
+		{
+			keyStartText.gameObject.SetActive(!keyStartText.gameObject.activeSelf);
+			restartText.gameObject.SetActive(!restartText.gameObject.activeSelf);
+			yield return new WaitForSeconds(0.2f);
+		}
+	}
 }
